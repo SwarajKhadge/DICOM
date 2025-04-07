@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DICOMI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f4f4; font-family: Arial, sans-serif; }
+        .chat-container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
+        .chat-box { height: 400px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; }
+        .chat-message { padding: 10px; margin: 5px 0; border-radius: 10px; max-width: 75%; }
+        .user { background: #007bff; color: white; align-self: flex-end; }
+        .bot { background: #e9ecef; color: black; align-self: flex-start; }
+        .input-group { margin-top: 15px; }
+        .typing-indicator { display: none; color: gray; font-style: italic; }
+        .button-container { display: flex; justify-content: space-between; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="chat-container mt-4">
+        <h4 class="text-center">Ask Anything</h4>
+        <div class="chat-box d-flex flex-column" id="chat-box"></div>
+        <p class="typing-indicator" id="typing">Thinking...</p>
+        <div class="input-group">
+            <input type="text" id="user-input" class="form-control" placeholder="Type your message...">
+            <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+        </div>
+        <div class="button-container">
+            <button class="btn btn-danger" onclick="clearChat()">Clear Chat</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("user-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            let inputField = document.getElementById("user-input");
+            let chatBox = document.getElementById("chat-box");
+            let typingIndicator = document.getElementById("typing");
+            let userMessage = inputField.value.trim();
+            if (!userMessage) return;
+
+            // Add user message to chat
+            let userDiv = document.createElement("div");
+            userDiv.className = "chat-message user align-self-end";
+            userDiv.innerText = userMessage;
+            chatBox.appendChild(userDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            inputField.value = "";
+            typingIndicator.style.display = "block";
+
+            // Send request to server
+            try {
+                let response = await fetch("http://localhost:3000/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: userMessage })
+                });
+                let data = await response.json();
+                let botMessage = data.response || "Error retrieving response.";
+
+                // Add bot response to chat
+                let botDiv = document.createElement("div");
+                botDiv.className = "chat-message bot align-self-start";
+
+                // Use innerHTML to allow HTML formatting in the bot's response
+                botDiv.innerHTML = botMessage; 
+
+                chatBox.appendChild(botDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } catch (error) {
+                console.error("Error:", error);
+            }
+            typingIndicator.style.display = "none";
+        }
+
+        // Function to clear the chat
+        function clearChat() {
+            let chatBox = document.getElementById("chat-box");
+            chatBox.innerHTML = ''; // Clear all chat messages
+        }
+    </script>
+</body>
+</html>

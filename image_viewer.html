@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DICOM Viewer</title>
+    <script src="https://unpkg.com/cornerstone-core/dist/cornerstone.js"></script>
+    <script src="https://unpkg.com/cornerstone-wado-image-loader"></script>
+    <script src="https://unpkg.com/cornerstone-web-image-loader"></script>
+    <script src="https://unpkg.com/dicom-parser"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        #container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+        #dicomImage {
+            width: 512px;
+            height: 512px;
+            border: 2px solid #333;
+            margin: 10px auto;
+            display: block;
+            background-color: black;
+        }
+        .controls {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .controls button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <input type="file" id="dicomFileInput">
+        <div id="dicomImage"></div>
+        <div class="controls">
+            <button id="zoomIn">Zoom In</button>
+            <button id="zoomOut">Zoom Out</button>
+            <button id="invert">Invert</button>
+            <button id="rotate">Rotate</button>
+        </div>
+    </div>
+    
+    <script>
+        cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+        let viewport = { scale: 1, invert: false, rotation: 0 };
+        const element = document.getElementById('dicomImage');
+
+        document.getElementById('dicomFileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                const arrayBuffer = e.target.result;
+                const blob = new Blob([arrayBuffer]);
+                const objectUrl = URL.createObjectURL(blob);
+                const imageId = `wadouri:${objectUrl}`;
+                
+                cornerstone.enable(element);
+                cornerstone.loadImage(imageId).then(function(image) {
+                    viewport = cornerstone.getDefaultViewportForImage(element, image);
+                    cornerstone.displayImage(element, image);
+                }).catch(function(err) {
+                    console.error('Error loading image:', err);
+                });
+            };
+            fileReader.readAsArrayBuffer(file);
+        });
+
+        document.getElementById('zoomIn').addEventListener('click', function() {
+            viewport.scale *= 1.2;
+            cornerstone.setViewport(element, viewport);
+        });
+
+        document.getElementById('zoomOut').addEventListener('click', function() {
+            viewport.scale /= 1.2;
+            cornerstone.setViewport(element, viewport);
+        });
+
+        document.getElementById('invert').addEventListener('click', function() {
+            viewport.invert = !viewport.invert;
+            cornerstone.setViewport(element, viewport);
+        });
+
+        document.getElementById('rotate').addEventListener('click', function() {
+            viewport.rotation = (viewport.rotation + 90) % 360;
+            cornerstone.setViewport(element, viewport);
+        });
+    </script>
+</body>
+</html>

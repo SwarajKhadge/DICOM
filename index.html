@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DICOM Image Analysis</title>
+    <script src="https://unpkg.com/cornerstone-core/dist/cornerstone.min.js"></script>
+    <script src="https://unpkg.com/cornerstone-tools/dist/cornerstoneTools.min.js"></script>
+    <script src="https://unpkg.com/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoader.min.js"></script>
+    <script src="https://unpkg.com/dicom-parser/dist/dicomParser.min.js"></script>
+    <script src="https://unpkg.com/cornerstone-math/dist/cornerstoneMath.min.js"></script>
+
+    <style>
+        /* ...existing styles... */
+
+        #get-help-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #get-help-btn:hover {
+            background-color: #45a049;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+        }
+
+        .drawer {
+            width: 220px;
+            background-color: #FF4C4C;
+            color: #fff;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100vh;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .drawer a {
+            color: #fff;
+            padding: 15px 0;
+            text-decoration: none;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .drawer a:hover, .drawer a.active {
+            background-color: #e04343;
+            font-weight: bold;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .main-content.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .upload-section {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .upload-section input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        .upload-section button {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #FF4C4C;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            width: 100%;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .upload-section button:hover {
+            background-color: #e04343;
+            transform: translateY(-2px);
+        }
+
+        .dicom-section {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .dicom-image-container {
+            width: 512px;
+            height: 512px;
+            background-color: black;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .past-uploads-list {
+            list-style-type: none;
+            padding: 0;
+            text-align: left;
+        }
+
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            color: #FF4C4C;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+            z-index: 1000;
+        }
+
+        .splash-screen h1 {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+
+        .splash-screen button {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #FF4C4C;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .splash-screen button:hover {
+            background-color: #e04343;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>     
+
+<!-- Splash Screen -->
+<div class="splash-screen" id="splashScreen">
+    <h1>Welcome to DICOM Image Analysis</h1>
+    <button onclick="closeSplashScreen()">Enter</button>
+</div>
+
+<div class="container">
+    <div class="drawer">
+        <h3>DICOM Analysis</h3>
+        <a id="uploadLink" class="active" onclick="switchTab('uploadTab')">Upload</a>
+        <a id="dicomLink" onclick="window.open('image_viewer.html', '_blank');">View DICOM</a>
+        <a id="pastUploadsLink" onclick="switchTab('pastUploadsTab')">Past Uploads</a>
+        <!-- New Chatbot Tab -->
+        <a id="chatbotLink" onclick="window.open('chatbot.html', '_blank');">Ask Dicomi</a>
+    </div>
+
+    <!-- Upload Tab -->
+    <div id="uploadTab" class="main-content active">
+        <h2>Upload a DICOM File</h2>
+        <div class="upload-section">
+            <input type="file" id="imageInput" accept=".dcm">
+            <button onclick="uploadImage()">Upload</button>
+        </div>
+    </div>
+
+    <!-- View DICOM Section -->
+    <div id="dicomTab" class="main-content">
+        <h2>Converted DICOM Image</h2>
+        <div class="dicom-section">
+            <div class="dicom-image-container">
+                <div id="dicomViewer" style="width: 512px; height: 512px; border: 2px solid black; position: relative;">
+                    <!-- This is where the DICOM image will be rendered -->
+                </div>
+            </div>
+
+            <div class="dicom-controls">
+                <button onclick="enablePan()">Pan</button>
+                <button onclick="enableZoom()">Zoom</button>
+                <button onclick="enableWindowLevel()">Window Level</button>
+                <button onclick="resetView()">Reset</button>
+                <button onclick="invertColors()">Invert</button>
+                <button onclick="rotateImage()">Rotate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Past Uploads Tab -->
+    <div id="pastUploadsTab" class="main-content">
+        <h2>Past Uploads</h2>
+        <ul class="past-uploads-list">
+            <li>No past uploads available.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    function closeSplashScreen() {
+        const splashScreen = document.getElementById('splashScreen');
+        splashScreen.style.opacity = '0';
+        setTimeout(() => {
+            splashScreen.style.display = 'none';
+        }, 500);
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.main-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+        
+        document.querySelectorAll('.drawer a').forEach(link => {
+            link.classList.remove('active');
+        });
+        document.getElementById(tabId.replace('Tab', 'Link')).classList.add('active');
+    }
+
+    function uploadImage() {
+        const fileInput = document.getElementById('imageInput');
+        const file = "C:/Users/swara/OneDrive/Desktop/dicom-00003.dcm";
+
+        if (!file) {
+            alert('Please select a DICOM file.');
+            return;
+        }
+
+        const fileReader = new FileReader();
+        fileReader.onload = function(event) {
+            const arrayBuffer = event.target.result;
+            const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+            const dicomImageContainer = document.getElementById('dicomViewer');
+            
+            cornerstone.enable(dicomImageContainer);
+            cornerstone.loadImage(imageId).then(image => {
+                cornerstone.displayImage(dicomImageContainer, image);
+            });
+
+            switchTab('dicomTab');
+        };
+
+        fileReader.readAsArrayBuffer(file);
+    }
+</script>
+
+</body>
+</html>

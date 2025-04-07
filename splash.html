@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect with Doctors</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #FF4C4C;
+            color: #fff;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            animation: fadeIn 1s ease;
+        }
+
+        h1 {
+            font-size: 40px;
+            margin: 0;
+            animation: slideIn 1s ease forwards;
+        }
+
+        p {
+            font-size: 20px;
+            margin-top: 10px;
+            opacity: 0;
+            animation: fadeIn 1s ease 0.5s forwards;
+        }
+
+        .loader {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid #fff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <h1>Connect with Doctors</h1>
+        <p>Loading your secure network...</p>
+        <div class="loader"></div>
+    </div>
+
+    <script>
+        // Redirect after a delay (optional)
+        setTimeout(() => {
+            // Replace with the actual URL for the Connect with Doctors functionality
+            window.location.href = "connect_with_doctors.html"; // Your main content URL
+        }, 3000); // 3 seconds delay
+    </script>
+
+</body>
+</html>
